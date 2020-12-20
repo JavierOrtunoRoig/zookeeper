@@ -8,7 +8,6 @@ import org.apache.zookeeper.CreateMode;
 import java.util.Random;
 
 public class Cliente {
-    public static boolean tareaCompletada = false;
     public static String tarea;
 
     public static void main(String[] args) throws Exception {
@@ -25,30 +24,26 @@ public class Cliente {
     }
 
     public static void createData(CuratorFramework client, String tarea) throws Exception {
-        System.out.println("Se va a crear el nodo " + tarea + " en zTask");
-        client.create().orSetData().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath("/zTask", tarea.getBytes());
-        System.out.println("Se ha creado el nodo " + tarea + " en zTask");
+        System.out.println("Se va a crear el nodo " + tarea + " en zTask/" + tarea);
+        client.create().orSetData().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath("/zTask/" + tarea, tarea.getBytes());
+        System.out.println("Se ha creado el nodo " + tarea + " en zTask/" + tarea);
     }
 
     public static CuratorCache iniciarCacheDone(CuratorFramework client) {
-        CuratorCache cacheDone = CuratorCache.build(client, "/zDone");
+        System.out.println("Cache escuchando en " + "/zDone/" + tarea);
+        CuratorCache cacheDone = CuratorCache.build(client, "/zDone/" + tarea);
         CuratorCacheListener listener = CuratorCacheListener.builder()
                 .forCreates(node ->
                 {
                     try {
-                        byte[] datos = node.getData();
 
-                        if (new String(datos).equals(tarea)) {
-                            System.out.println("La tarea: " + new String(datos) + " ha sido completada.\n");
-                            client.delete().forPath("/zDone");
-                            createData(client, tarea);
-                            //tareaCompletada = true;
-                        }
+                        System.out.println("La tarea: ha sido completada.\n");
+                        client.delete().forPath("/zDone/" + tarea);
+                        createData(client, tarea);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 })
-                .forInitialized(() -> System.out.println("Cache initialized"))
                 .build();
 
         cacheDone.listenable().addListener(listener);

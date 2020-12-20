@@ -102,7 +102,6 @@ public class ExCurator {
 			while (true) Thread.sleep(1000);
 			
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}        
 

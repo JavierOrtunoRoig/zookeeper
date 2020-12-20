@@ -25,6 +25,7 @@ public class Trabajador {
     }
 
     public static void CuratorCacheWorker(CuratorFramework client) {
+        //TODO: Poner con nodos intermedios
 
         CuratorCache cacheTask = CuratorCache.build(client, "/zAssign/" + worker );
         CuratorCacheListener listener = CuratorCacheListener.builder()
@@ -36,7 +37,7 @@ public class Trabajador {
                             System.out.println("Yo, " + worker + ", voy a trabajar con la tarea " + tarea);
                             deleteTaskfromZNode(client, tarea);
 
-                            Thread.sleep(15000);
+                            Thread.sleep(5000);
                             System.out.println("\nTAREA ACABADA!!");
                             deleteFromAsign(client, worker, tarea);
                             writeInZDone(client, tarea);
@@ -49,7 +50,6 @@ public class Trabajador {
 
                 })
                 .forChanges((oldNode, newNode) -> System.out.println("Cache changed"))
-                .forInitialized(() -> System.out.println("Cache initialized"))
                 .build();
 
         // Registrar listener
@@ -58,10 +58,9 @@ public class Trabajador {
     }
 
     public static void createFreeWorker(CuratorFramework client, String worker) throws Exception {
-
-        System.out.println("Se va a crear el nodo " + worker + "en zWorkers");
-        client.create().orSetData().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath("/zWorkers", worker.getBytes());
-        System.out.println("Se ha creado el nodo " + worker + "en zWorkers");
+        System.out.println("Se va a escribir en /zWorkers/" + worker);
+        client.create().orSetData().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath("/zWorkers/" + worker, worker.getBytes());
+        System.out.println("Se ha escrito en /zWorkers/" + worker);
     }
 
     public static boolean iHaveTask(CuratorFramework client, String worker) throws Exception {
@@ -74,8 +73,8 @@ public class Trabajador {
     }
 
     private static void deleteTaskfromZNode(CuratorFramework client, String tarea) throws Exception {
-        if (client.checkExists().forPath("/zTask") != null && new String(client.getData().forPath("/zTask")).equals(tarea.substring(1))) {
-            client.delete().forPath("/zTask");
+        if (client.checkExists().forPath("/zTask" + tarea) != null) { //&& new String(client.getData().forPath("/zTask"+ tarea)).equals(tarea.substring(1))) {
+            client.delete().forPath("/zTask" + tarea);
         }
     }
 
@@ -85,8 +84,8 @@ public class Trabajador {
     }
 
     private static void writeInZDone(CuratorFramework client, String tarea) throws Exception {
-        System.out.println("Se va a crear el nodo " + tarea.substring(1) + "en zDone");
-        client.create().orSetData().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath("/zDone", tarea.substring(1).getBytes());
-        System.out.println("Se ha creado el nodo " + tarea.substring(1) + "en zDone \n\n");
+        System.out.println("Se va a crear el nodo " + tarea.substring(1) + " en /zDone/"+ tarea.substring(1));
+        client.create().orSetData().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath("/zDone/" + tarea.substring(1), "a".getBytes());
+        System.out.println("Se ha creado el nodo " + tarea.substring(1) + " en /zDone/" + tarea.substring(1) + "\n\n\n\n");
     }
 }
